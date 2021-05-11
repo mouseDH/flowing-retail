@@ -1,78 +1,60 @@
-# Sample microservices implementing order fulfillment
+# Flowing Retail
 
-This sample application shows how to implement
+This sample application demonstrates a simple order fulfillment system, decomposed into multiple independent components (like _microservices_).
 
-* a simple order fulfillment system
+The repository contains code for multiple implementation alternatives to allow a broad audience to understand the code and to compare alternatives. The [table below](#alternatives) lists these alternatives.
 
-in the context of
+The example respects learnings from **Domain Driven Design (DDD)**, Event Driven Architecture (EDA) and **Microservices (µS)** and is designed to give you hands-on access to these topics.
 
-* Domain Driven Design (DDD)
-* Event Driven Architecture (EDA)
-* Microservices (µS)
+**Note:** The code was written in order to be explained. Hence, I favored simplified code or copy & paste over production-ready code with generic solutions. **Don't consider the coding style best practice! It is purpose-written to be easily explainable code**.
 
-with the concrete technologies/frameworks:
+You can find more information on the concepts in the [Practical Process Automation](https://processautomationbook.com/) book with O'Reilly.
 
-* Java
-* Spring Boot
-* Spring Cloud Streams
-* Camunda
-* Kafka
+Flowing retail simulates a very easy order fulfillment system:
 
-# Links
+![Events and Commands](docs/workflow-in-service.png)
 
-* Introduction blog post by Bernd Rücker: https://blog.bernd-ruecker.com/flowing-retail-demonstrating-aspects-of-microservices-events-and-their-flow-with-concrete-source-7f3abdd40e53
+<a name = "alternatives"></a>
 
-# Overview and architecture
+## Architecture and implementation alternatives
 
-Flowing retail simulates a very easy order fulfillment system. The business logic is separated into the following microservices:
+The most fundamental choice is to select the **communication mechanism**:
 
-![Microservices](docs/services.png)
+* **[Apache Kafka](kafka/)** as event bus (could be easily changed to messaging, e.g. RabbitMQ): [](docs/architecture.png)
+* **[REST](rest/)** communication between Services.
+  * This example also shows how to do **stateful resilience patterns** like **stateful retries** leveraging a workflow engine.
+* **[Zeebe](zeebe/)** broker doing work distribution.
 
-* The core domains communicate via messages with each other.
-* Messages might contain *events* or *commands*.
+After the communication mechanism, the next choice is the **workflow engine**:
 
-Note that every component does its own parts of the overall order fulfillment capability. As an example this is illustrated using BPMN and showing the Order and Payment Service with their processes:
+* **Camunda Platform**
+* **Zeebe as managed service on Camunda Cloud**
 
-![Events and Commands](docs/bpmn.png)
+and the **programming language**:
+
+* **Java**
+* **Go**
+* **JavaScript / TypeScript**
+
+## Storyline
+
+Flowing retail simulates a very easy order fulfillment system. The business logic is separated into the services shown above (shown as a [context map](https://www.infoq.com/articles/ddd-contextmapping)).
+
+### Long running services and orchestration
+
+Some services are **long running** in nature - for example: the payment service asks customers to update expired credit cards. A workflow engine is used to persist and control these long running interactions.
+
+### Workflows live within service boundaries
+
+Note that the state machine (_or workflow engine in this case_) is a library used **within** one service. If different services need a workflow engine they can  run whatever engine they want. This way it is an autonomous team decision if they want to use a framework, and which one:
+
+![Events and Commands](docs/workflow-in-service.png)
 
 
-# Run the application
 
-* Download or clone the source code
-* Run a full maven build
+## Links and background reading
 
-```
-mvn install
-```
-
-* Install and start Kafka on the standard port
-* Create topic *"flowing-retail"* (TODO: Auto Creation by Spring)
-
-```
-kafka-topics.sh --create --zookeeper localhost:2181 --replication-factor 1 --partitions 1 --topic flowing-retail
-```
-
-* You can check & query all topics by: 
-
-```
-kafka-topics.sh --list --zookeeper localhost:2181
-```
-
-* Start the different microservices components by Spring Boot one by one
-    
-```
-mvn -f checkout exec:java
-...
-```
-
-You can also import the projects into your favorite IDE and start the following class yourself:
-
-```
-checkout/io.flowing.retail.java.CheckoutApplication
-...
-```
-
-* Now you can place an order via [http://localhost:8090](http://localhost:8090)
-* You can inspect the order VPMN via [http://localhost:8091](http://localhost:8091)
-* You can inspect all events going on via [http://localhost:8095](http://localhost:8095)
+* [Practical Process Automation](https://processautomationbook.com/) book
+* Introduction blog post: https://blog.bernd-ruecker.com/flowing-retail-demonstrating-aspects-of-microservices-events-and-their-flow-with-concrete-source-7f3abdd40e53
+* InfoQ-Writeup "Events, Flows and Long-Running Services: A Modern Approach to Workflow Automation": https://www.infoq.com/articles/events-workflow-automation
 
